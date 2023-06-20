@@ -14,10 +14,33 @@ current_temperature = 'void'
 current_light_level = 'void'
 led_state = {'red':0, 'green':0}
 
+# Configurações de autenticação SASL
+sasl_username = "seu_usuario"
+sasl_password = "sua_senha"
+
+# Configurações do consumidor
+consumer_config = {
+    "bootstrap_servers": KAFKA_SERVER + ":" + KAFKA_PORT,
+    "group_id": "meu_grupo",
+    "security_protocol": "SASL_PLAINTEXT",
+    "sasl_mechanism": "PLAIN",
+    "sasl_plain_username": sasl_username,
+    "sasl_plain_password": sasl_password
+}
+
+# Configurações do produtor
+producer_config = {
+    "bootstrap_servers": KAFKA_SERVER + ":" + KAFKA_PORT,
+    "security_protocol": "SASL_PLAINTEXT",
+    "sasl_mechanism": "PLAIN",
+    "sasl_plain_username": sasl_username,
+    "sasl_plain_password": sasl_password
+}
+
 # Kafka consumer to run on a separate thread
 def consume_temperature():
     global current_temperature
-    consumer = KafkaConsumer(bootstrap_servers=KAFKA_SERVER+':'+KAFKA_PORT)
+    consumer = KafkaConsumer(**consumer_config)
     consumer.subscribe(topics=('temperature'))
     for msg in consumer:
         print ('Received Temperature: ', msg.value.decode())
@@ -26,14 +49,14 @@ def consume_temperature():
 # Kafka consumer to run on a separate thread
 def consume_light_level():
     global current_light_level
-    consumer = KafkaConsumer(bootstrap_servers=KAFKA_SERVER+':'+KAFKA_PORT)
+    consumer = KafkaConsumer(**consumer_config)
     consumer.subscribe(topics=('lightlevel'))
     for msg in consumer:
         print ('Received Light Level: ', msg.value.decode())
         current_light_level = msg.value.decode()
 
 def produce_led_command(state, ledname):
-    producer = KafkaProducer(bootstrap_servers=KAFKA_SERVER+':'+KAFKA_PORT)
+    producer = KafkaProducer(**producer_config)
     producer.send('ledcommand', key=ledname.encode(), value=str(state).encode())
     return state
         
